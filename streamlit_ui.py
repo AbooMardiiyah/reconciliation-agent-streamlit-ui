@@ -8,7 +8,7 @@ from typing import Dict, List
 
 
 # Configuration
-API_BASE_URL = "http://localhost:8000"  # Change this to your API URL
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000") # Change this to your API URL
 POLLING_INTERVAL = 2  # seconds
 
 # Page Configuration
