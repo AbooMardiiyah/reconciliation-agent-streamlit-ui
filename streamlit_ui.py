@@ -8,7 +8,7 @@ import requests
 import streamlit as st
 
 # Configuration
-API_BASE_URL = "http://localhost:8000"  # Change this to your API URL
+API_BASE_URL = st.secrets["API_BASE_URL"] # Change this to your API URL
 POLLING_INTERVAL = 2  # seconds
 
 # Page Configuration
