@@ -8,7 +8,7 @@ import requests
 import streamlit as st
 
 # Configuration
-API_BASE_URL = st.secrets["API_BASE_URL"] # Change this to your API URL
+API_BASE_URL = st.secrets["API_BASE_URL"]  # Change this to your API URL
 POLLING_INTERVAL = 2  # seconds
 
 # Page Configuration
@@ -122,7 +122,7 @@ if "pending_actions" not in st.session_state:
     st.session_state.pending_actions = []
 # Add proper simulation mode state management
 if "simulation_mode" not in st.session_state:
-    st.session_state.simulation_mode = True
+    st.session_state.simulation_mode = True  # Default to demo mode (simulation)
 
 
 def check_api_health():
@@ -577,6 +577,7 @@ def render_reconciliation_main():
             today = date.today()
             default_start = date(today.year, today.month, 1)
             default_end = date(today.year, today.month, today.day)
+            st.info("🔴 **Live Mode - Real data from Acumatica and Mono**")
 
         start_date = st.date_input(
             "Start Date", value=default_start, key="start_date_input"
