@@ -8,7 +8,7 @@ import requests
 import streamlit as st
 
 # Configuration
-API_BASE_URL = st.secrets["API_BASE_URL"]  # Change this to your API URL
+API_BASE_URL = st.secrets['API_BASE_URL']  # Change this to your API URL
 POLLING_INTERVAL = 2  # seconds
 
 # Page Configuration
@@ -122,7 +122,7 @@ if "pending_actions" not in st.session_state:
     st.session_state.pending_actions = []
 # Add proper simulation mode state management
 if "simulation_mode" not in st.session_state:
-    st.session_state.simulation_mode = True  # Default to demo mode (simulation)
+    st.session_state.simulation_mode = True
 
 
 def check_api_health():
@@ -144,20 +144,12 @@ def fetch_history() -> list | None:
 
     converted_history = []
     for record in history_records:
-        # Create period string from start_date and end_date
-        start_date = record.get("start_date", "")
-        end_date = record.get("end_date", "")
-        period = f"{start_date} to {end_date}" if start_date and end_date else "N/A"
-        
         history_item = {
             "rec_id": record.get("thread_id", ""),
-            "thread_id": record.get("thread_id", ""),  # Keep original thread_id for fallback
-            "start_date": start_date,
-            "end_date": end_date,
-            "period": period,  # Add missing period field
+            "start_date": record.get("start_date", ""),
+            "end_date": record.get("end_date", ""),
             "status": record.get("status", "unknown"),
             "timestamp": record.get("created_at", ""),
-            "created_at": record.get("created_at", ""),  # Add created_at for UI
             "completed_at": record.get("completed_at"),
             "simulation": record.get("simulation_mode", True),
             "results": record.get("metadata", {}) if record.get("metadata") else {},
@@ -585,7 +577,6 @@ def render_reconciliation_main():
             today = date.today()
             default_start = date(today.year, today.month, 1)
             default_end = date(today.year, today.month, today.day)
-            st.info("🔴 **Live Mode - Real data from Acumatica and Mono**")
 
         start_date = st.date_input(
             "Start Date", value=default_start, key="start_date_input"
@@ -1663,13 +1654,11 @@ def render_history():
 
                 with col1:
                     st.markdown("**Run ID**")
-                    thread_id = item.get("thread_id", "")
-                    rec_id = item.get("rec_id", f"REC-{thread_id[:8]}" if thread_id else "N/A")
-                    st.markdown(rec_id)
+                    st.markdown(item.get("rec_id", f"REC-{item['thread_id'][:8]}"))
 
                 with col2:
                     st.markdown("**Period**")
-                    st.markdown(item.get("period", "N/A"))
+                    st.markdown(item["period"])
 
                 with col3:
                     st.markdown("**Created**")
@@ -1713,9 +1702,7 @@ def render_history():
 
                         # Only try live status if no historical data available
                         if not status:
-                            thread_id = item.get("thread_id")
-                            if thread_id:
-                                status = get_reconciliation_status(thread_id)
+                            status = get_reconciliation_status(item["thread_id"])
 
                         st.session_state.reconciliation_status = status
                         st.session_state.selected_history_item = item
@@ -1737,8 +1724,7 @@ def render_history_detail():
     item = st.session_state.selected_history_item
     status = st.session_state.reconciliation_status
 
-    thread_id = item.get("thread_id", "")
-    rec_id = item.get("rec_id", f"REC-{thread_id[:8]}" if thread_id else "N/A")
+    rec_id = item.get("rec_id", f"REC-{item['thread_id'][:8]}")
 
     # Center the header content with improved styling to match the image
     st.markdown(
@@ -1857,32 +1843,31 @@ def render_history_detail():
             key="export_report",
         ):
             with st.spinner("Generating report..."):
-                thread_id = item.get("thread_id")
-                if thread_id:
-                    export_response = export_excel_report(
-                        thread_id, multi_bank=is_multi_bank
+                thread_id = item["thread_id"]
+                export_response = export_excel_report(
+                    thread_id, multi_bank=is_multi_bank
+                )
+                if export_response and export_response.get("success"):
+                    # Show download button
+                    st.download_button(
+                        label="📥 Download Excel Report",
+                        data=export_response["file_data"],
+                        file_name=export_response["filename"],
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        use_container_width=True,
                     )
-                    if export_response and export_response.get("success"):
-                        # Show download button
-                        st.download_button(
-                            label="📥 Download Excel Report",
-                            data=export_response["file_data"],
-                            file_name=export_response["filename"],
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            use_container_width=True,
+                    if is_multi_bank:
+                        st.success(
+                            f"✅ Multi-bank report generated successfully! ({num_banks} banks)"
                         )
-                        if is_multi_bank:
-                            st.success(
-                                f"✅ Multi-bank report generated successfully! ({num_banks} banks)"
-                            )
-                        else:
-                            st.success("✅ Report generated successfully!")
-                    elif export_response and "message" in export_response:
-                        st.success(export_response["message"])
-                        if "report_paths" in export_response:
-                            st.info("💡 Check your downloads folder for the Excel report.")
                     else:
-                        st.error("❌ Failed to generate report")
+                        st.success("✅ Report generated successfully!")
+                elif export_response and "message" in export_response:
+                    st.success(export_response["message"])
+                    if "report_paths" in export_response:
+                        st.info("💡 Check your downloads folder for the Excel report.")
+                else:
+                    st.error("❌ Failed to generate report")
 
     else:
         # Handle different reconciliation statuses with specific messages
