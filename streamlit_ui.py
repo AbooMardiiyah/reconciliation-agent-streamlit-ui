@@ -149,14 +149,16 @@ def fetch_history() -> list | None:
         pass  # If sorting fails, use original order
 
     converted_history = []
+    total_records = len(history_records)
     for idx, record in enumerate(history_records):
         # Create period string from start_date and end_date
         start_date = record.get("start_date", "")
         end_date = record.get("end_date", "")
         period = f"{start_date} to {end_date}" if start_date and end_date else "N/A"
         
-        # Generate REC-ID based on position (REC-001, REC-002, etc.)
-        rec_id = f"REC-{(idx + 1):03d}"
+        # Generate REC-ID with latest = highest number (REC-054, REC-053, etc.)
+        # Since records are already sorted latest first, idx=0 gets highest number
+        rec_id = f"REC-{(total_records - idx):03d}"
         
         history_item = {
             "rec_id": rec_id,  # Use generated REC-ID instead of thread_id
@@ -1683,14 +1685,25 @@ def render_history():
                     st.markdown("**Created**")
                     created_at = item.get("created_at", "N/A")
                     if created_at != "N/A":
-                        # Format the created_at timestamp
+                        # Format the created_at timestamp (handle ISO format)
                         try:
-                            dt = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+                            # Parse ISO format timestamp (e.g., "2025-10-30T09:18:47.195838+00:00")
+                            if "T" in created_at:
+                                # Handle ISO format with timezone
+                                dt_str = created_at.split("+")[0].split("Z")[0]  # Remove timezone
+                                if "." in dt_str:
+                                    dt_str = dt_str.split(".")[0]  # Remove microseconds
+                                dt = datetime.strptime(dt_str, "%Y-%m-%dT%H:%M:%S")
+                            else:
+                                # Handle simple format
+                                dt = datetime.strptime(created_at, "%Y-%m-%d %H:%M:%S")
+                            
                             formatted_date = dt.strftime("%b %d, %Y")
-                            formatted_time = dt.strftime("%I:%M %p")
+                            formatted_time = dt.strftime("%I:%M %p UTC")  # Add UTC to clarify timezone
                             st.markdown(f"{formatted_date}")
                             st.markdown(f"{formatted_time}")
                         except Exception:
+                            # Fallback: show raw timestamp if parsing fails
                             st.markdown(created_at)
                     else:
                         st.markdown("N/A")
