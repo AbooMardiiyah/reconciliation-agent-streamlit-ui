@@ -1654,7 +1654,8 @@ def render_history():
 
                 with col1:
                     st.markdown("**Run ID**")
-                    st.markdown(item.get("rec_id", f"REC-{item['thread_id'][:8]}"))
+                    thread_id = item.get("thread_id", "")
+                    st.markdown(item.get("rec_id", f"REC-{item[thread_id][:8]}"))
 
                 with col2:
                     st.markdown("**Period**")
