@@ -1863,26 +1863,26 @@ def render_history_detail():
                         thread_id, multi_bank=is_multi_bank
                     )
                     if export_response and export_response.get("success"):
-                    # Show download button
-                    st.download_button(
-                        label="📥 Download Excel Report",
-                        data=export_response["file_data"],
-                        file_name=export_response["filename"],
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True,
-                    )
-                    if is_multi_bank:
-                        st.success(
-                            f"✅ Multi-bank report generated successfully! ({num_banks} banks)"
+                        # Show download button
+                        st.download_button(
+                            label="📥 Download Excel Report",
+                            data=export_response["file_data"],
+                            file_name=export_response["filename"],
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            use_container_width=True,
                         )
+                        if is_multi_bank:
+                            st.success(
+                                f"✅ Multi-bank report generated successfully! ({num_banks} banks)"
+                            )
+                        else:
+                            st.success("✅ Report generated successfully!")
+                    elif export_response and "message" in export_response:
+                        st.success(export_response["message"])
+                        if "report_paths" in export_response:
+                            st.info("💡 Check your downloads folder for the Excel report.")
                     else:
-                        st.success("✅ Report generated successfully!")
-                elif export_response and "message" in export_response:
-                    st.success(export_response["message"])
-                    if "report_paths" in export_response:
-                        st.info("💡 Check your downloads folder for the Excel report.")
-                else:
-                    st.error("❌ Failed to generate report")
+                        st.error("❌ Failed to generate report")
 
     else:
         # Handle different reconciliation statuses with specific messages
